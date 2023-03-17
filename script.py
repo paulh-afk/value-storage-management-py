@@ -1,21 +1,23 @@
 import csv
 from datetime import datetime
+import random
+
+fieldnames = ['horodatage', 'temperature', 'humidite']
 
 datas = []
 
 with open('datas.csv', 'r') as csvfile:
     try:
-        spamreader = csv.reader(csvfile)
-
-        next(spamreader, None)
+        spamreader = csv.DictReader(csvfile)
 
         for row in spamreader:
-            horodatage = datetime.fromisoformat(row[0])
+            horodatage = datetime.strptime(
+                row['horodatage'], '%Y-%m-%d %H:%M:%S')
 
             datas.append({
-                "horodatage": horodatage,
-                "temperature": row[1],
-                "humidite": row[2]
+                'horodatage': horodatage,
+                'temperature': row['temperature'],
+                'humidite': row['humidite']
             })
 
     except IOError:
@@ -23,9 +25,9 @@ with open('datas.csv', 'r') as csvfile:
 
 
 def add_data(temperature: float, humidite: float):
-    horodatage = datetime.now()
+    horodatage = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    if len(datas) == 30:
+    while len(datas) > 30:
         datas.pop(0)
 
     datas.append({
@@ -35,24 +37,16 @@ def add_data(temperature: float, humidite: float):
     })
 
     try:
-        with open('datas.csv', 'w+') as csvfile:
-            csvwriter = csv.writer(csvfile)
+        with open('datas.csv', 'w+', newline='') as csvfile:
+            csvwriter = csv.DictWriter(csvfile, fieldnames)
 
-            csvwriter.writerow(['horodatage', 'temperature', 'humidite'])
-
-            for i in range(len(datas)):
-                list_values = list(datas[i].values())
-
-                horodatage = list_values[0].strftime(
-                    "%Y:%m:%d %H-%M-%S")
-                temperature = float(list_values[1])
-                humidite = float(list_values[2])
-
-                csvwriter.writerow([horodatage, temperature, humidite])
+            csvwriter.writeheader()
+            csvwriter.writerows(datas)
 
     except IOError:
         exit()
 
 
+# Generate random datas in CSV file
 for _ in range(50):
-    add_data(30, 30)
+    add_data(random.randrange(20, 40), random.randrange(20, 70))
